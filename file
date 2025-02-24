@@ -1,0 +1,154 @@
+
+> panaderia-backend@1.0.0 dev
+> nodemon server.js
+
+[33m[nodemon] 3.1.9[39m
+[33m[nodemon] to restart at any time, enter `rs`[39m
+[33m[nodemon] watching path(s): *.*[39m
+[33m[nodemon] watching extensions: js,mjs,cjs,json[39m
+[32m[nodemon] starting `node server.js`[39m
+🚀 Servidor corriendo en http://localhost:3000
+✅ Conectado a MongoDB
+createINVOICE
+2025-02-12 polar Proveedor 84 $ polar test undefined
+newInvoice {
+  supplier: 'polar',
+  dueDate: 2025-02-12T00:00:00.000Z,
+  _id: new ObjectId('67abf49a3659faedf9671b68')
+}
+createExpense from Controller
+createExpenseFromController ReferenceError: dueDate is not defined
+    at createExpense (file:///Users/usuario/BUENOS_PANES/panaderia-backend/controllers/expenseControllers.js:10:38)
+    at file:///Users/usuario/BUENOS_PANES/panaderia-backend/routes/invoices.js:33:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node server.js`[39m
+🚀 Servidor corriendo en http://localhost:3000
+✅ Conectado a MongoDB
+createINVOICE
+2025-02-12 polar Proveedor 84 $ polar desc undefined
+newInvoice {
+  supplier: 'polar',
+  dueDate: 2025-02-12T00:00:00.000Z,
+  _id: new ObjectId('67abf50b245dfa6e0959a1e6')
+}
+createExpense from Controller
+createExpenseFromController ReferenceError: dueDate is not defined
+    at createExpense (file:///Users/usuario/BUENOS_PANES/panaderia-backend/controllers/expenseControllers.js:10:38)
+    at file:///Users/usuario/BUENOS_PANES/panaderia-backend/routes/invoices.js:33:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node server.js`[39m
+🚀 Servidor corriendo en http://localhost:3000
+✅ Conectado a MongoDB
+createINVOICE
+2025-02-12 polar Proveedor 84 $ polar test undefined
+newInvoice {
+  supplier: 'polar',
+  dueDate: 2025-02-12T00:00:00.000Z,
+  _id: new ObjectId('67abf55cdaaaf2d5f2ad50bd')
+}
+createExpense from Controller
+createExpenseFromController Error: Expense validation failed: amountBs: Cast to Number failed for value "NaN" (type number) at path "amountBs", invoiceId: Cast to Number failed for value "new ObjectId('67abf55cdaaaf2d5f2ad50bd')" (type ObjectId) at path "invoiceId", paymentMethod: Path `paymentMethod` is required.
+    at ValidationError.inspect (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/error/validation.js:52:26)
+    at formatValue (node:internal/util/inspect:805:19)
+    at inspect (node:internal/util/inspect:364:10)
+    at formatWithOptionsInternal (node:internal/util/inspect:2279:40)
+    at formatWithOptions (node:internal/util/inspect:2141:10)
+    at console.value (node:internal/console/constructor:343:14)
+    at console.log (node:internal/console/constructor:380:61)
+    at createExpense (file:///Users/usuario/BUENOS_PANES/panaderia-backend/controllers/expenseControllers.js:14:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///Users/usuario/BUENOS_PANES/panaderia-backend/routes/invoices.js:33:5 {
+  errors: {
+    amountBs: CastError: Cast to Number failed for value "NaN" (type number) at path "amountBs"
+        at SchemaNumber.cast (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/schema/number.js:380:11)
+        at SchemaType.applySetters (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/schemaType.js:1255:12)
+        at model.$set (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/document.js:1443:22)
+        at model.$set (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/document.js:1137:16)
+        at model.Document (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/document.js:178:12)
+        at model.Model (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/model.js:129:12)
+        at new model (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/model.js:4656:15)
+        at createExpense (file:///Users/usuario/BUENOS_PANES/panaderia-backend/controllers/expenseControllers.js:10:24)
+        at file:///Users/usuario/BUENOS_PANES/panaderia-backend/routes/invoices.js:33:11
+        at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+      stringValue: '"NaN"',
+      messageFormat: undefined,
+      kind: 'Number',
+      value: NaN,
+      path: 'amountBs',
+      reason: AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+      
+        assert.ok(!isNaN(val))
+      
+          at castNumber (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/cast/number.js:27:10)
+          at SchemaNumber.cast (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/schema/number.js:378:12)
+          at SchemaType.applySetters (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/schemaType.js:1255:12)
+          at model.$set (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/document.js:1443:22)
+          at model.$set (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/document.js:1137:16)
+          at model.Document (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/document.js:178:12)
+          at model.Model (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/model.js:129:12)
+          at new model (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/model.js:4656:15)
+          at createExpense (file:///Users/usuario/BUENOS_PANES/panaderia-backend/controllers/expenseControllers.js:10:24)
+          at file:///Users/usuario/BUENOS_PANES/panaderia-backend/routes/invoices.js:33:11 {
+        generatedMessage: true,
+        code: 'ERR_ASSERTION',
+        actual: false,
+        expected: true,
+        operator: '=='
+      },
+      valueType: 'number'
+    },
+    invoiceId: CastError: Cast to Number failed for value "new ObjectId('67abf55cdaaaf2d5f2ad50bd')" (type ObjectId) at path "invoiceId"
+        at SchemaNumber.cast (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/schema/number.js:380:11)
+        at SchemaType.applySetters (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/schemaType.js:1255:12)
+        at model.$set (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/document.js:1443:22)
+        at model.$set (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/document.js:1137:16)
+        at model.Document (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/document.js:178:12)
+        at model.Model (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/model.js:129:12)
+        at new model (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/model.js:4656:15)
+        at createExpense (file:///Users/usuario/BUENOS_PANES/panaderia-backend/controllers/expenseControllers.js:10:24)
+        at file:///Users/usuario/BUENOS_PANES/panaderia-backend/routes/invoices.js:33:11
+        at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+      stringValue: `"new ObjectId('67abf55cdaaaf2d5f2ad50bd')"`,
+      messageFormat: undefined,
+      kind: 'Number',
+      value: new ObjectId('67abf55cdaaaf2d5f2ad50bd'),
+      path: 'invoiceId',
+      reason: AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+      
+        assert.ok(!isNaN(val))
+      
+          at castNumber (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/cast/number.js:27:10)
+          at SchemaNumber.cast (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/schema/number.js:378:12)
+          at SchemaType.applySetters (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/schemaType.js:1255:12)
+          at model.$set (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/document.js:1443:22)
+          at model.$set (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/document.js:1137:16)
+          at model.Document (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/document.js:178:12)
+          at model.Model (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/model.js:129:12)
+          at new model (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/model.js:4656:15)
+          at createExpense (file:///Users/usuario/BUENOS_PANES/panaderia-backend/controllers/expenseControllers.js:10:24)
+          at file:///Users/usuario/BUENOS_PANES/panaderia-backend/routes/invoices.js:33:11 {
+        generatedMessage: true,
+        code: 'ERR_ASSERTION',
+        actual: false,
+        expected: true,
+        operator: '=='
+      },
+      valueType: 'ObjectId'
+    },
+    paymentMethod: ValidatorError: Path `paymentMethod` is required.
+        at validate (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/schemaType.js:1404:13)
+        at SchemaType.doValidate (/Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/schemaType.js:1388:7)
+        at /Users/usuario/BUENOS_PANES/panaderia-backend/node_modules/mongoose/lib/document.js:3087:18
+        at process.processTicksAndRejections (node:internal/process/task_queues:77:11) {
+      properties: [Object],
+      kind: 'required',
+      path: 'paymentMethod',
+      value: '',
+      reason: undefined,
+      [Symbol(mongoose#validatorError)]: true
+    }
+  },
+  _message: 'Expense validation failed'
+}
