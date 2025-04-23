@@ -8,6 +8,7 @@ import User from './models/User.js';
 import invoiceRoutes from './routes/invoices.js';
 import expenseRoutes from './routes/expenses.js';
 import exchangeRate from './routes/exchangeRate.js'
+import incomeRoutes from './routes/incomes.js'
 // Configuración de dotenv
 dotenv.config();
 
@@ -34,9 +35,9 @@ app.get('/', (req, res) => {
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
     try {
-        console.log('HIT LOGIN URL')
         const user = await User.findOne({ username });
         if (!user) {
+            console.log('usuario no encontrado')
             return res.status(400).json({ error: 'Usuario no encontrado' });
         }
 
@@ -60,6 +61,9 @@ app.use('/exchange-rate', exchangeRate);
 
 // Rutas de facturas
 app.use('/invoices', invoiceRoutes);
+
+// Rutas de Incomes
+app.use('/incomes', incomeRoutes);
 
 // Middleware de manejo de errores
 app.use((err, req, res, next) => {

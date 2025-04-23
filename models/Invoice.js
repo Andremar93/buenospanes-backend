@@ -11,7 +11,8 @@ const invoiceSchema = new mongoose.Schema({
   paymentMethod: { type: String, required: false }, // Como se paga
   description: { type: String, required: true }, // Descripcion del gasto
   date: { type: Date, default: Date.now, required: true }, // Fecha del gasto
-  paid: {type: Boolean, required: true},
+  paid: { type: Boolean, required: true },
+  googleRow: { type: Number, required: true }
 }, { timestamps: true });
 
 const Invoice = mongoose.model('Invoice', invoiceSchema);

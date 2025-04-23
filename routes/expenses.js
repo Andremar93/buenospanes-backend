@@ -2,73 +2,35 @@ import express from 'express';
 import Expense from '../models/Expense.js';
 import Invoice from '../models/Invoice.js';
 import { getExchangeRateByDate } from '../controllers/exchangeRateController.js';
+import { createExpense, createExpenseByInvoice } from '../controllers/expenseControllers.js'
 
 const router = express.Router();
 
 // Ruta para crear un gasto en /expenses/create
 router.post('/create', async (req, res) => {
     try {
-        const { description, amount, currency, date, type, subType, paymentMethod, paid } = req.body;
-        let amountBs;
-        let amountDollars;
-
-        // Obtener la tasa de cambio para la fecha especificada
-        const rate = await getExchangeRateByDate(date);
-
-        // Calcular la cantidad en Bs y en dólares
-        if (currency === 'Bs') {
-            amountBs = amount;
-            amountDollars = (amount / rate.rate).toFixed(2);
-        } else {
-            amountBs = amount * rate.rate;
-            amountDollars = amount;
-        }
-
-        // Crear y guardar el nuevo gasto
-        const newExpense = new Expense({ description, amountBs, amountDollars, currency, date, type, subType, paymentMethod, paid });
-        await newExpense.save();
-
+        const newExpense = await createExpense(req.body);
         res.status(201).json({ message: 'Gasto creado con éxito', expense: newExpense });
     } catch (error) {
         console.log(error);
-        res.status(500).json({ error: 'Error al crear el gasto' });
+        // Si el error tiene un status definido, lo usamos, si no, usamos 500
+        const status = error.status || 500;
+        const message = error.message || 'Error al crear el gasto';
+        res.status(status).json({ error: message });
     }
 });
 
 // Ruta para crear un gasto en /expenses/create by Invoice
-// Ruta para crear un gasto en /expenses/create
 router.post('/create-by-invoice', async (req, res) => {
     try {
-        const { invoiceId, paymentMethod, date } = req.body;
-
-        const invoice = await Invoice.findById(invoiceId);
-        invoice.paid = true; // Cambiar el estado de "paid" a true
-
-        // Guardar los cambios en la base de datos
-        await invoice.save();
-
-        const { description, currency, type } = invoice;
-        let { amountDollars, amountBs } = invoice;
-        // // Obtener la tasa de cambio para la fecha especificada
-        const rate = await getExchangeRateByDate(date);
-        if(!rate){
-            return res.status(204).json({error: `Tasa del día ${date} no se encuentra en sistema.`})
-        }
-
-        // Calcular la cantidad en Bs y en dólares
-        if (currency === 'Bs') {
-            amountDollars = (amountBs / rate.rate).toFixed(2);
-        } else {
-            amountBs = amountDollars * rate.rate;
-        }
-        // // Crear y guardar el nuevo gasto
-        const newExpense = new Expense({ description, amountBs, amountDollars, currency, date, type, paymentMethod, paid: true });
-        await newExpense.save();
-
-        res.status(201).json({ message: 'Gasto creado con éxito', expense: newExpense });
+        const newExpenseByInvoice = await createExpenseByInvoice(req.body)
+        res.status(201).json({ message: 'Gasto creado con éxito', expense: newExpenseByInvoice })
     } catch (error) {
         console.log(error);
-        res.status(500).json({ error: 'Error al crear el gasto' });
+        // Si el error tiene un status definido, lo usamos, si no, usamos 500
+        const status = error.status || 500;
+        const message = error.message || 'Error al crear el gasto';
+        res.status(status).json({ error: message });
     }
 });
 
@@ -86,5 +48,97 @@ router.get('/get', async (req, res) => {
         res.status(500).json({ error: 'Error al obtener los gastos' });
     }
 });
+
+router.get('/expenses-resume', async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+
+        // Crear fechas en la zona horaria local
+        const startDateTime = new Date(startDate + 'T00:00:00');
+        const endDateTime = new Date(endDate + 'T23:59:59.999');
+
+        console.log('Date range:', startDateTime, endDateTime);
+
+        const expenses = await Expense.find({
+            paid: true,
+            date: {
+                $gte: startDateTime,
+                $lte: endDateTime
+            }
+        }).sort({ date: -1 });
+
+        const aggregatedData = await Expense.aggregate([
+            {
+                $match: {
+                    paid: true,
+                    date: {
+                        $gte: startDateTime,
+                        $lte: endDateTime
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalDollars: { $sum: '$amountDollars' },
+                    totalBs: { $sum: '$amountBs' }
+                }
+            }
+        ]);
+
+        const paymentMethodTotals = await Expense.aggregate([
+            {
+                $match: {
+                    paid: true,
+                    date: {
+                        $gte: startDateTime,
+                        $lte: endDateTime
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: '$paymentMethod',
+                    totalDollars: { $sum: '$amountDollars' },
+                    totalBs: { $sum: '$amountBs' }
+                }
+            },
+            {
+                $project: {
+                    paymentMethod: '$_id',
+                    totalDollars: { $round: [{ $toDouble: '$totalDollars' }, 2] },
+                    totalBs: { $round: [{ $toDouble: '$totalBs' }, 2] },
+                    _id: 0
+                }
+            }
+        ]);
+
+        if (expenses.length === 0) {
+            return res.status(200).json({
+                expenses: [],
+                totals: {
+                    totalDollars: 0,
+                    totalBs: 0
+                },
+                paymentMethodTotals: []
+            });
+        }
+
+        console.log(JSON.stringify(paymentMethodTotals))
+
+        res.status(200).json({
+            expenses,
+            totals: {
+                totalDollars: Number(aggregatedData[0].totalDollars.toFixed(2)),
+                totalBs: Number(aggregatedData[0].totalBs.toFixed(2))
+            },
+            paymentMethodTotals
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: 'Error al obtener el resumen de gastos' });
+    }
+});
+
 
 export default router;

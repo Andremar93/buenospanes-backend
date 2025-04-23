@@ -1,58 +1,28 @@
 import express from 'express';
 import Invoice from '../models/Invoice.js';
 import { getExchangeRateByDate } from '../controllers/exchangeRateController.js';
-import { createExpense } from '../controllers/expenseControllers.js';
+import { createInvoice } from '../controllers/invoiceControllers.js'
 
 const router = express.Router();
 
 // Crear una nueva factura
 router.post('/create', async (req, res) => {
   try {
-    console.log('createINVOICE')
-    const { dueDate, supplier, type, amount, currency, date } = req.body;
-
-    const rate = await getExchangeRateByDate(new Date());
-
-    let amountBs;
-    let amountDollars;
-    if (currency === 'Bs') {
-      amountBs = amount;
-      amountDollars = (amount / rate.rate).toFixed(2);
-    } else {
-      amountBs = amount * rate.rate;
-      amountDollars = amount;
-    }
-
-    const newInvoice = new Invoice({
-      supplier,
-      dueDate,
-      type,
-      amountBs,
-      amountDollars,
-      currency,
-      description: supplier + ' ' + new Date().toLocaleDateString('es-ES', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      }),
-      date,
-      paid: false
-    });
-    await newInvoice.save();
-
+    const newInvoice = await createInvoice(req.body)
     res.status(201).json({ message: 'Factura creada exitosamente', invoice: newInvoice });
   } catch (error) {
     console.log('error', error)
-    res.status(400).json({ message: 'Error al crear la factura', error: error.message });
+    // Si el error tiene un status definido, lo usamos, si no, usamos 500
+    const status = error.status || 500;
+    const message = error.message || 'Error al crear el gasto';
+    res.status(status).json({ error: message });
   }
 });
 
 // Obtener todas las facturas
 router.get('/get', async (req, res) => {
   try {
-    console.log('getInvoices')
-    
-    const invoices = await Invoice.find({paid: false}).sort({ date: -1 });
+    const invoices = await Invoice.find({ paid: false }).sort({ date: -1 });
     res.status(200).json(invoices);
   } catch (error) {
     res.status(400).json({ message: 'Error al obtener las facturas', error: error.message });

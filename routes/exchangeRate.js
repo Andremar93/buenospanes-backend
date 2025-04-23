@@ -7,6 +7,7 @@ const router = express.Router();
 router.post('/create', async (req, res) => {
     try {
         const { rate } = req.body;
+        console.log('REQ BODYYYYYYYY',req.body)
         const now = new Date();
         now.setUTCHours(now.getUTCHours() - 4); 
         const date = now.toISOString().split('T')[0];

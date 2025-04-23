@@ -9,8 +9,9 @@ const expenseSchema = new mongoose.Schema({
   paymentMethod: { type: String, required: false }, // Como se paga
   description: { type: String, required: true }, // Descripcion del gasto
   date: { type: Date, default: Date.now, required: true }, // Fecha del gasto
-  paid: {type: Boolean, required: true},
-  invoiceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Invoice', required: false }
+  paid: { type: Boolean, required: true },
+  invoiceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Invoice', required: false },
+  googleRow: { type: Number, required: true }
 }, { timestamps: true });
 
 const Expense = mongoose.model('Expense', expenseSchema);

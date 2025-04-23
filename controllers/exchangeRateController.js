@@ -21,7 +21,6 @@ export const getExchangeRateByDate = async (date) => {
     try {
         const requestedDate = new Date(date);
         const formattedDate = requestedDate.toISOString().split('T')[0]; // Obtiene solo YYYY-MM-DD
-        console.log(date)
         const rate = await ExchangeRate.findOne({
             $expr: {
                 $eq: [
