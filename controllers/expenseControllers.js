@@ -47,7 +47,7 @@ export const createExpense = async (expenseData) => {
       paymentMethod,
       rate: rate.rate
     });
-
+    console.log(`googleRow ${googleRow}`)
     if (!googleRow) {
       return { status: 500, message: 'No se pudo registrar el gasto en Google Sheets' };
     }
