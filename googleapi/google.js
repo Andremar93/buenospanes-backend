@@ -1,10 +1,14 @@
 import { google } from "googleapis";
 import { config } from "dotenv";
+import dotenv from 'dotenv';
 
 config();
+dotenv.config();
+
+const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
 
 const auth = new google.auth.GoogleAuth({
-    keyFile: new URL("./credenciales.json", import.meta.url).pathname,
+    credentials,
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
 
@@ -93,7 +97,7 @@ export const modifyRow = async (sheetName, row, newValues) => {
         const sheets = google.sheets({ version: "v4", auth: client });
 
         const spreadsheetId = process.env.SPREADSHEET_ID;
-        const range = `${sheetName}!J${row}:J${row}`; 
+        const range = `${sheetName}!J${row}:J${row}`;
         const googleResponse = await sheets.spreadsheets.values.update({
             spreadsheetId,
             range,
