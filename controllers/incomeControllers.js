@@ -74,7 +74,7 @@ export const createIncome = async (incomeData) => {
         if (!googleRow) {
             return { status: 500, message: 'No se pudo registrar el ingreso en Google Sheets' };
         }
-
+        console.log(googleRow, 'googleRow')
         // Crear y guardar el nuevo gasto
         const newIncome = new Income({
             sitef,

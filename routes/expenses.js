@@ -57,8 +57,6 @@ router.get('/expenses-resume', async (req, res) => {
         const startDateTime = new Date(startDate + 'T00:00:00');
         const endDateTime = new Date(endDate + 'T23:59:59.999');
 
-        console.log('Date range:', startDateTime, endDateTime);
-
         const expenses = await Expense.find({
             paid: true,
             date: {
@@ -123,8 +121,6 @@ router.get('/expenses-resume', async (req, res) => {
                 paymentMethodTotals: []
             });
         }
-
-        console.log(JSON.stringify(paymentMethodTotals))
 
         res.status(200).json({
             expenses,
