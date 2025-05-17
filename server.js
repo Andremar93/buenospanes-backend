@@ -71,6 +71,11 @@ app.use((err, req, res, next) => {
     res.status(500).json({ mensaje: "Ocurrió un error en el servidor", error: err.message });
 });
 
+
+app.get("/ping", (req, res) => {
+	res.status(200).send("pong");
+});
+
 // Puerto de ejecución
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
