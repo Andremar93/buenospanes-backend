@@ -9,6 +9,7 @@ import invoiceRoutes from './routes/invoices.js';
 import expenseRoutes from './routes/expenses.js';
 import exchangeRate from './routes/exchangeRate.js'
 import incomeRoutes from './routes/incomes.js'
+import auth from './middleware/auth.js';
 // Configuración de dotenv
 dotenv.config();
 
@@ -33,11 +34,12 @@ app.get('/', (req, res) => {
 
 // Ruta de Login
 app.post('/login', async (req, res) => {
+    console.log('login')
     const { username, password } = req.body;
     try {
         const user = await User.findOne({ username });
         if (!user) {
-            console.log('usuario no encontrado')
+            console.log('Usuario no encontrado');
             return res.status(400).json({ error: 'Usuario no encontrado' });
         }
 
@@ -45,25 +47,34 @@ app.post('/login', async (req, res) => {
         if (!isMatch) {
             return res.status(400).json({ error: 'Contraseña incorrecta' });
         }
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.json({ token });
+
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+
+        res.json({
+            token,
+            user: {
+                id: user._id,
+                username: user.username,
+            }
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Error en el servidor' });
     }
 });
 
+
 //Expenses API
-app.use('/expenses', expenseRoutes);
+app.use('/expenses', auth, expenseRoutes);
 
 //Exchange Rate API
-app.use('/exchange-rate', exchangeRate);
+app.use('/exchange-rate', auth, exchangeRate);
 
 // Rutas de facturas
-app.use('/invoices', invoiceRoutes);
+app.use('/invoices', auth, invoiceRoutes);
 
 // Rutas de Incomes
-app.use('/incomes', incomeRoutes);
+app.use('/incomes', auth, incomeRoutes);
 
 // Middleware de manejo de errores
 app.use((err, req, res, next) => {
@@ -73,7 +84,7 @@ app.use((err, req, res, next) => {
 
 
 app.get("/ping", (req, res) => {
-	res.status(200).send("pong");
+    res.status(200).send("pong");
 });
 
 // Puerto de ejecución
