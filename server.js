@@ -34,7 +34,6 @@ app.get('/', (req, res) => {
 
 // Ruta de Login
 app.post('/login', async (req, res) => {
-    console.log('login')
     const { username, password } = req.body;
     try {
         const user = await User.findOne({ username });
@@ -49,7 +48,6 @@ app.post('/login', async (req, res) => {
         }
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
-
         res.json({
             token,
             user: {
