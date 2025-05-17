@@ -38,7 +38,7 @@ export const appendToSheet = async (sheetName, values, formatRules = {}) => {
         // 1. Guardar los datos en Google Sheets
         const appendResponse = await sheets.spreadsheets.values.append({
             spreadsheetId,
-            range: `${sheetName}!A1`,
+            range: `${sheetName}`,
             valueInputOption: "RAW",
             insertDataOption: "INSERT_ROWS",
             resource: { values },
