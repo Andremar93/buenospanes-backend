@@ -40,7 +40,7 @@ export const appendToSheet = async (sheetName, values, formatRules = {}) => {
             resource: { values },
         });
 
-        console.log(`✅ Datos agregados a la hoja '${sheetName}':`, values);
+        // console.log(`✅ Datos agregados a la hoja '${sheetName}':`, values);
         // 2. Obtener la fila donde se insertaron los datos
         const updatedRange = appendResponse.data.updates.updatedRange;
         const startRow = parseInt(updatedRange.match(/\d+/)[0]); // Extrae la fila
@@ -79,7 +79,6 @@ export const appendToSheet = async (sheetName, values, formatRules = {}) => {
             });
             console.log("✅ Formatos aplicados correctamente");
         }
-        console.log('appendTOSHEEET')
         return startRow;
 
     } catch (error) {
@@ -101,7 +100,6 @@ export const modifyRow = async (sheetName, row, newValues) => {
             valueInputOption: "RAW",
             resource: { values: [newValues] }
         });
-        console.log(`Fila ${row} actualizada con:`, newValues, googleResponse);
         return googleResponse
     } catch (error) {
         console.error("❌ Error al escribir en Google Sheets:", error);

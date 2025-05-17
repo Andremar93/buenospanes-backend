@@ -1,55 +1,55 @@
-import express from 'express';
 import Invoice from '../models/Invoice.js';
 import { getExchangeRateByDate } from '../controllers/exchangeRateController.js';
 import { appendToSheet } from '../googleapi/google.js';
+import { calculateAmounts } from '../helpers/currencyHelpers.js';
+import { formatDateForSheets } from '../helpers/dateHelpers.js';
 
-
-async function addToGoogleSheet(dueDate, supplier, type, currency, description, amountDollars, amountBs, rate) {
-
-    const dateForGoogleSheets = new Date();
-    const fechaSheets = (dateForGoogleSheets - new Date("1899-12-30")) / (1000 * 60 * 60 * 24);
-
-    const dueDateForGoogleSheets = new Date(dueDate)
-    const dueDateSheets = (dueDateForGoogleSheets - new Date("1899-12-30")) / (1000 * 60 * 60 * 24)
+async function addToGoogleSheet(dueDate, supplier, numeroFactura, type, currency, description, amountDollars, amountBs, rate) {
 
     const values = [
-        description, parseFloat(amountBs), parseFloat(amountDollars), currency, fechaSheets, dueDateSheets, type, supplier, rate.rate, false
+        description,
+        numeroFactura,
+        parseFloat(amountBs),
+        parseFloat(amountDollars),
+        currency,
+        formatDateForSheets(new Date()),
+        formatDateForSheets(dueDate),
+        type, supplier, rate.rate, false
     ];
 
     return appendToSheet('facturas', [values], {
-        "C": { numberFormat: { type: "CURRENCY", pattern: "$#,##0.00" } },
-        "E": { numberFormat: { type: "DATE", pattern: "yyyy-mm-dd" } },
+        "D": { numberFormat: { type: "CURRENCY", pattern: "$#,##0.00" } },
         "F": { numberFormat: { type: "DATE", pattern: "yyyy-mm-dd" } },
-        "I": { numberFormat: { type: "CURRENCY", pattern: "$#,##0.00" } },
+        "G": { numberFormat: { type: "DATE", pattern: "yyyy-mm-dd" } },
+        "J": { numberFormat: { type: "CURRENCY", pattern: "$#,##0.00" } },
     });
 }
 // Crear un nuevo gasto
 export const createInvoice = async (invoiceData) => {
     try {
-        const { dueDate, supplier, type, amount, currency } = invoiceData;
+        const { dueDate, supplier, type, amount, currency, numeroFactura } = invoiceData;
+
+        // Validaciones básicas
+        if (!dueDate || !supplier || !amount || !currency || !type) {
+            return { status: 400, message: 'Datos incompletos para crear la factura.' };
+        }
+
 
         const rate = await getExchangeRateByDate(new Date());
         if (!rate) {
             return { status: 404, message: `No existe tasa de cambio para la fecha ${new Date(date).toLocaleDateString()}` };
         }
 
-        let amountBs;
-        let amountDollars;
-        if (currency === 'Bs') {
-            amountBs = amount;
-            amountDollars = (amount / rate.rate).toFixed(2);
-        } else {
-            amountBs = (amount * rate.rate).toFixed(2);
-            amountDollars = amount;
+        const { amountBs, amountDollars } = calculateAmounts(amount, currency, rate.rate);
+
+        const description = `${supplier} #${numeroFactura || ''}`;
+
+        const googleRow = await addToGoogleSheet(dueDate, supplier, numeroFactura, type, currency, description, amountDollars, amountBs, rate)
+
+        if (!googleRow) {
+            // Falló la inserción en Google Sheets, no guardar en DB
+            return { status: 500, message: 'Error al guardar en Google Sheets. No se guardó la factura.' };
         }
-
-        const description = supplier + ' ' + new Date().toLocaleDateString('es-ES', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        })
-
-        const googleRow = await addToGoogleSheet(dueDate, supplier, type, currency, description, amountDollars, amountBs, rate)
 
         const newInvoice = new Invoice({
             supplier,
@@ -62,6 +62,7 @@ export const createInvoice = async (invoiceData) => {
             date: new Date(),
             paid: false,
             googleRow,
+            numeroFactura
         });
 
         await newInvoice.save();

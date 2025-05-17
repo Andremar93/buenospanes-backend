@@ -7,7 +7,6 @@ const router = express.Router();
 router.post('/create', async (req, res) => {
     try {
         const { rate } = req.body;
-        console.log('REQ BODYYYYYYYY',req.body)
         const now = new Date();
         now.setUTCHours(now.getUTCHours() - 4); 
         const date = now.toISOString().split('T')[0];
@@ -23,14 +22,12 @@ router.post('/create', async (req, res) => {
 // Obtener tasa de cambio para una fecha específica
 router.get('/get/:date', async (req, res) => {
     try {
-        console.log('hHIT GEt exhange-rate/get')
-        const requestedDate = new Date(req.params.date);
 
+        const requestedDate = new Date(req.params.date);
         // Buscar la tasa solo si la fecha coincide exactamente
         const rate = await ExchangeRate.findOne({ date: { $eq: requestedDate } });
 
         if (!rate) {
-            console.log('no se encontro')
             return res.status(204).json({ message: 'No se encontró tasa de cambio para la fecha especificada' });
         }
 
