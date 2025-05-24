@@ -97,7 +97,7 @@ export const modifyRow = async (sheetName, row, newValues) => {
         const sheets = google.sheets({ version: "v4", auth: client });
 
         const spreadsheetId = process.env.SPREADSHEET_ID;
-        const range = `${sheetName}!J${row}:J${row}`;
+        const range = `${sheetName}!K${row}:K${row}`;
         const googleResponse = await sheets.spreadsheets.values.update({
             spreadsheetId,
             range,
