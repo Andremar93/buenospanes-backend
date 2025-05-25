@@ -19,7 +19,7 @@ mongoose.connect(process.env.MONGO_URI, {
 import User from './models/User.js'; // Asegúrate de tener el modelo User con extensión .js
 
 const createUser = async () => {
-  await mongoose.connection.collection('users').dropIndex('email_1');
+  // await mongoose.connection.collection('users').dropIndex('email_1');
 
   const salt = bcrypt.genSaltSync(10);
   const hashedPassword = await bcrypt.hash('12345', salt);

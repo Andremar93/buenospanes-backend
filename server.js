@@ -88,10 +88,13 @@ app.get("/ping", (req, res) => {
 
 // Push notifications
 app.post('/register-push-token', auth, async (req, res) => {
-    const token = req.body.expoPushToken; // ← Asegúrate que coincida con el frontend
+    const token = req.body.expoPushToken;
     const userId = req.user.id;
 
-    console.log("register-push-token", token, userId);
+    console.log(">> /register-push-token llamado");
+    console.log("Token recibido:", token);
+    console.log("Usuario autenticado:", userId);
+    console.log("req.body",JSON.stringify(req.body));
 
     try {
         await User.findByIdAndUpdate(
