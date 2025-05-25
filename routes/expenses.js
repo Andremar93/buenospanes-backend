@@ -1,15 +1,20 @@
 import express from 'express';
 import Expense from '../models/Expense.js';
 import Invoice from '../models/Invoice.js';
-import { getExchangeRateByDate } from '../controllers/exchangeRateController.js';
+import User from '../models/User.js';
 import { createExpense, createExpenseByInvoice } from '../controllers/expenseControllers.js'
-
+import { sendNotificationToAllUsers } from '../services/notificationService.js'
 const router = express.Router();
 
 // Ruta para crear un gasto en /expenses/create
 router.post('/create', async (req, res) => {
     try {
         const newExpense = await createExpense(req.body);
+        if (newExpense) {
+            userId = req.body.userId
+            const {username} = User.findById(userId)
+            await sendNotificationToAllUsers({ title: `Gasto agregado`, body: `por: ${username}` });
+        }
         res.status(201).json({ message: 'Gasto creado con éxito', expense: newExpense });
     } catch (error) {
         console.log(error);

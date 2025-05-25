@@ -12,7 +12,8 @@ const UserSchema = new mongoose.Schema({
     password: {
         type: String,
         required: true
-    }
+    },
+    expoPushToken: { type: String, default: null },
 });
 
 UserSchema.pre('save', async function (next) {

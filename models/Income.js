@@ -12,7 +12,8 @@ const incomeSchema = new mongoose.Schema({
   totalSistema: { type: Number, required: true }, 
   notas: { type: String, required: false }, 
   date: { type: Date, default: Date.now, required: true }, 
-  googleRow: { type: Number, required: true }
+  googleRow: { type: Number, required: true },
+  usuario: {type: String, required: true}
 }, { timestamps: true });
 
 const Income = mongoose.model('Income', incomeSchema);

@@ -10,6 +10,7 @@ import expenseRoutes from './routes/expenses.js';
 import exchangeRate from './routes/exchangeRate.js'
 import incomeRoutes from './routes/incomes.js'
 import auth from './middleware/auth.js';
+import { sendNotificationToAllUsers } from './services/notificationService.js';
 // Configuración de dotenv
 dotenv.config();
 
@@ -84,6 +85,40 @@ app.use((err, req, res, next) => {
 app.get("/ping", (req, res) => {
     res.status(200).send("pong");
 });
+
+// Push notifications
+app.post('/register-push-token', auth, async (req, res) => {
+    const token = req.body.expoPushToken; // ← Asegúrate que coincida con el frontend
+    const userId = req.user.id;
+
+    console.log("register-push-token", token, userId);
+
+    try {
+        await User.findByIdAndUpdate(
+            userId,
+            { expoPushToken: token },
+            { upsert: true }
+        );
+        res.sendStatus(200);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error actualizando el token de notificaciones' });
+    }
+});
+
+app.get('/send-demo-notification', async (req, res) => {
+    try {
+      const title = "Notificación de prueba";
+      const body = "Este es un mensaje de prueba";
+  
+      await sendNotificationToAllUsers({ title, body });
+      res.status(200).json({ message: 'Notificación enviada con éxito' });
+    } catch (error) {
+      console.error('Error enviando notificación de prueba:', error);
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  });
+  
 
 // Puerto de ejecución
 const PORT = process.env.PORT || 3000;

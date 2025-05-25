@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "ac280ac1-83d2-4e4c-9e2f-68927a7a8682"
+      }
+    },
+    "android": {
+      "package": "com.andremar93.panaderiabackend"
+    }
+  }
+}
