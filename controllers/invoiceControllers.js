@@ -4,6 +4,14 @@ import { appendToSheet } from '../googleapi/google.js';
 import { calculateAmounts } from '../helpers/currencyHelpers.js';
 import { formatDateForSheets } from '../helpers/dateHelpers.js';
 
+
+function getUtcMinus4Date() {
+    const now = new Date();
+    // Resta 4 horas (en milisegundos)
+    const utcMinus4 = new Date(now.getTime() - 4 * 60 * 60 * 1000);
+    return new Date(utcMinus4.getFullYear(), utcMinus4.getMonth(), utcMinus4.getDate());
+}
+
 async function addToGoogleSheet(dueDate, supplier, numeroFactura, type, currency, description, amountDollars, amountBs, rate) {
 
     const values = [
@@ -35,10 +43,11 @@ export const createInvoice = async (invoiceData) => {
         }
 
 
-        const rate = await getExchangeRateByDate(new Date());
+        const date = getUtcMinus4Date();
+        const rate = await getExchangeRateByDate(new Date(date));
         if (!rate) {
-            return { status: 404, message: `No existe tasa de cambio para la fecha ${new Date(date).toLocaleDateString()}` };
-        }
+            throw new Error(`No existe tasa de cambio para la fecha ${new Date(date).toLocaleDateString()}`);
+        }        
 
         const { amountBs, amountDollars } = calculateAmounts(amount, currency, rate.rate);
 
