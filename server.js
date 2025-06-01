@@ -47,7 +47,7 @@ app.post('/login', async (req, res) => {
         if (!isMatch) {
             return res.status(400).json({ error: 'Contraseña incorrecta' });
         }
-
+        console.log("LOGIN FROM SEND NOTIFICATION")
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
         res.json({
             token,
