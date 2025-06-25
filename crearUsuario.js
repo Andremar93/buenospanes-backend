@@ -25,7 +25,7 @@ const createUser = async () => {
   const hashedPassword = await bcrypt.hash('12345', salt);
 
   const newUser = new User({
-    username: 'andrea',
+    username: 'test',
     password: '12345'
   });
 
