@@ -1,6 +1,4 @@
 import express from 'express';
-import Invoice from '../models/Invoice.js';
-import { getExchangeRateByDate } from '../controllers/exchangeRateController.js';
 import { createIncome } from '../controllers/incomeControllers.js';
 
 const router = express.Router();

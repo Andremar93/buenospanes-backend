@@ -35,7 +35,11 @@ export const createInvoice = async (invoiceData) => {
         }
 
 
-        const rate = await getExchangeRateByDate(new Date());
+        const now = new Date();
+        now.setHours(now.getHours() - 4);
+
+        const rate = await getExchangeRateByDate(now);
+
         if (!rate) {
             return { status: 404, message: `No existe tasa de cambio para la fecha ${new Date(date).toLocaleDateString()}` };
         }
