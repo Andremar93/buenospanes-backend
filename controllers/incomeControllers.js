@@ -1,9 +1,6 @@
-import express from 'express';
 import Income from '../models/Income.js';
-import { appendToSheet } from '../googleapi/google.js';
+import { appendToSheet, modifyFullRow } from '../googleapi/google.js';
 import { getExchangeRateByDate } from './exchangeRateController.js';
-
-
 
 async function addToGoogleSheet(date, totalSistema,
     efectivoBs,
@@ -40,6 +37,38 @@ async function addToGoogleSheet(date, totalSistema,
 
 }
 
+export const getIncomes = async (getData = {}) => {
+    try {
+        let from, to;
+
+        // Si vienen fechas personalizadas, úsalas
+        if (getData.startDate && getData.finishDate) {
+            from = new Date(getData.startDate);
+            to = new Date(getData.finishDate);
+            to.setHours(23, 59, 59, 999); // incluir todo el día final
+        } else {
+            // Por defecto: últimos 31 días
+            to = new Date();
+            from = new Date(to);
+            from.setDate(to.getDate() - 31);
+        }
+
+        const incomes = await Income.find({
+            date: { $gte: from, $lte: to }
+        }).sort({ date: -1 });
+
+        return {
+            from,
+            to,
+            incomes
+        };
+
+    } catch (error) {
+        console.error('Error al obtener ingresos:', error);
+        throw new Error('Error al obtener los ingresos');
+    }
+};
+
 export const createIncome = async (incomeData) => {
     try {
         const {
@@ -56,10 +85,13 @@ export const createIncome = async (incomeData) => {
             date
         } = incomeData;
 
-        const rate = await getExchangeRateByDate(date);
-        if (!rate) {
-            return { status: 404, message: `No existe tasa de cambio para la fecha ${new Date(date).toLocaleDateString()}` };
+        const rateAsync = await getExchangeRateByDate(date);
+
+        if (!rateAsync) {
+            throw { status: 404, message: `No existe tasa de cambio para la fecha ${new Date(date).toLocaleDateString()}` };
         }
+
+        const rate = rateAsync.rate;
 
         const googleRow = await addToGoogleSheet(date, totalSistema,
             efectivoBs,
@@ -70,11 +102,11 @@ export const createIncome = async (incomeData) => {
             sitef,
             gastosBs,
             gastosDolares,
-            notas, rate.rate)
+            notas, rate)
         if (!googleRow) {
-            return { status: 500, message: 'No se pudo registrar el ingreso en Google Sheets' };
+            throw { status: 500, message: 'No se pudo registrar el ingreso en Google Sheets' };
         }
-        console.log(googleRow, 'googleRow')
+
         // Crear y guardar el nuevo gasto
         const newIncome = new Income({
             sitef,
@@ -87,13 +119,103 @@ export const createIncome = async (incomeData) => {
             sitef,
             gastosDolares,
             totalSistema,
-            notas, date, googleRow
+            notas, date, googleRow, rate
         });
         await newIncome.save();
 
         return newIncome;
     } catch (error) {
+        // Si ya es un error lanzado manualmente, lo re-lanzamos
+        if (error.status) throw error;
+
+        // Si es un error inesperado, lo manejamos como interno
         console.error('createIncome Error:', error);
-        return { status: 500, message: 'Error interno del servidor' };
+        throw { status: 500, message: 'Error interno del servidor' };
     }
 }
+
+export const updateIncome = async (incomeId, income) => {
+    try {
+
+        const
+            { sitef,
+                puntoExterno,
+                efectivoBs,
+                efectivoDolares,
+                pagomovil,
+                biopago,
+                gastosBs,
+                gastosDolares,
+                totalSistema,
+                notas, date, } = income
+
+        const incomeInDatabase = await Income.findById(incomeId);
+        if (!incomeInDatabase) {
+            throw { status: 404, message: `Factura con ID ${incomeId} no encontrada` };
+        }
+
+        const rateAsync = await getExchangeRateByDate(date);
+        if (!rateAsync) {
+            throw {
+                status: 404,
+                message: `No existe tasa de cambio para la fecha ${new Date(date).toLocaleDateString()}`
+            };
+        }
+
+        const rate = rateAsync.rate
+        const googleRow = incomeInDatabase.googleRow
+
+        const editedIncome = await modifyFullRow('ingresos', googleRow,
+            [
+                date,
+                efectivoBs,
+                efectivoDolares,
+                sitef,
+                puntoExterno,
+                pagomovil,
+                biopago,
+                gastosBs,
+                gastosDolares,
+                totalSistema,
+                notas, googleRow, rate
+            ]
+        );
+        if (!editedIncome) {
+            throw { status: 500, message: 'No se pudo editar la fila en Google Sheets (ingresos)' };
+        }
+
+
+        const updatedIncome = await Income.findByIdAndUpdate(
+            incomeId,
+            {
+                date,
+                efectivoBs,
+                efectivoDolares,
+                sitef,
+                puntoExterno,
+                pagomovil,
+                biopago,
+                gastosBs,
+                gastosDolares,
+                totalSistema,
+                notas, googleRow, rate, updatedAt: Date.now()
+            },
+            { new: true }
+        );
+
+        if (!updatedIncome) {
+            throw { status: 400, message: 'No se encontro la factura.' };
+        }
+
+        return updatedIncome;
+
+
+    } catch (error) {
+        // Si ya es un error lanzado manualmente, lo re-lanzamos
+        if (error.status) throw error;
+
+        // Si es un error inesperado, lo manejamos como interno
+        console.error('createIncome Error:', error);
+        throw { status: 500, message: 'Error interno del servidor' };
+    }
+};

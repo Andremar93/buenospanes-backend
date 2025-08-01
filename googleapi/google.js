@@ -91,7 +91,7 @@ export const appendToSheet = async (sheetName, values, formatRules = {}) => {
     }
 };
 
-export const modifyRow = async (sheetName, row, newValues) => {
+export const modifyPaidValue = async (sheetName, row, newValues) => {
     try {
         const client = await auth.getClient();
         const sheets = google.sheets({ version: "v4", auth: client });
@@ -109,8 +109,77 @@ export const modifyRow = async (sheetName, row, newValues) => {
         console.error("❌ Error al escribir en Google Sheets:", error);
         throw error;
     }
-
 }
+
+export const modifyFullRow = async (sheetName, row, newValues) => {
+    try {
+        const client = await auth.getClient();
+        const sheets = google.sheets({ version: "v4", auth: client });
+
+        const spreadsheetId = process.env.SPREADSHEET_ID;
+        const range = `${sheetName}!A${row}:Z${row}`;
+        const googleResponse = await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range,
+            valueInputOption: "RAW",
+            resource: { values: [newValues] }
+        });
+        return googleResponse
+    } catch (error) {
+        console.error("❌ Error al escribir en Google Sheets:", error);
+        throw error;
+    }
+}
+
+export const eraseRow = async (sheetName, rowNumber) => {
+    try {
+        const client = await auth.getClient();
+        const sheets = google.sheets({ version: "v4", auth: client });
+
+        const spreadsheetId = process.env.SPREADSHEET_ID;
+
+        // Obtener el ID del sheet por su nombre
+        const sheetInfo = await sheets.spreadsheets.get({ spreadsheetId });
+        const sheet = sheetInfo.data.sheets.find(
+            (s) => s.properties.title === sheetName
+        );
+
+        if (!sheet) {
+            throw new Error(`Hoja "${sheetName}" no encontrada.`);
+        }
+
+        const sheetId = sheet.properties.sheetId;
+
+        // Nota: rowIndex empieza desde 0
+        const rowIndex = rowNumber - 1;
+
+        const deleteRequest = {
+            spreadsheetId,
+            resource: {
+                requests: [
+                    {
+                        deleteDimension: {
+                            range: {
+                                sheetId,
+                                dimension: "ROWS",
+                                startIndex: rowIndex,
+                                endIndex: rowIndex + 1,
+                            },
+                        },
+                    },
+                ],
+            },
+        };
+
+        const response = await sheets.spreadsheets.batchUpdate(deleteRequest);
+        return response;
+    } catch (error) {
+        console.error("❌ Error al eliminar fila en Google Sheets:", error);
+        throw error;
+    }
+};
+
+
 
 
 

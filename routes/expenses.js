@@ -1,8 +1,6 @@
 import express from 'express';
 import Expense from '../models/Expense.js';
-import Invoice from '../models/Invoice.js';
-import { getExchangeRateByDate } from '../controllers/exchangeRateController.js';
-import { createExpense, createExpenseByInvoice } from '../controllers/expenseControllers.js'
+import { createExpense, createExpenseByInvoice, updateExpenseById, getExpenses } from '../controllers/expenseControllers.js'
 
 const router = express.Router();
 
@@ -23,6 +21,7 @@ router.post('/create', async (req, res) => {
 // Ruta para crear un gasto en /expenses/create by Invoice
 router.post('/create-by-invoice', async (req, res) => {
     try {
+        console.log('HIT CREATE BY INVOICE')
         const newExpenseByInvoice = await createExpenseByInvoice(req.body)
         res.status(201).json({ message: 'Gasto creado con éxito', expense: newExpenseByInvoice })
     } catch (error) {
@@ -35,19 +34,40 @@ router.post('/create-by-invoice', async (req, res) => {
 });
 
 
+// Ruta para actualizar un gasto por su ID
+router.put('/:id', async (req, res) => {
+    try {
+
+
+        const expenseId = req.params.id;
+        const updateData = { ...req.body };
+
+        const response = await updateExpenseById(expenseId, updateData)
+        console.log(response)
+        res.status(200).json({ message: 'Gasto actualizado con éxito', expense: response });
+    } catch (error) {
+        console.error('Error actualizando gasto:', error);
+        res.status(500).json({ error: 'Error al actualizar el gasto' });
+    }
+});
+
+
 // Ruta para obtener todos los gastos ordenados por la fecha más reciente
-router.get('/get', async (req, res) => {
+router.post('/get', async (req, res) => {
     try {
         // Obtener los gastos ordenados por la fecha más reciente
-        const expenses = await Expense.find({ paid: true }).sort({ date: -1 }); // -1 para orden descendente
-
+        const expenses = await getExpenses(req.body)
+        if (!expenses) {
+            return res.status(404).json({ message: 'Gastos no encontrados.' })
+        }
         // Devolver los gastos
-        res.status(200).json(expenses);
+        res.status(200).json({ message: 'Gastos obtenidos', expenses });
     } catch (error) {
         console.log(error);
         res.status(500).json({ error: 'Error al obtener los gastos' });
     }
 });
+
 
 router.get('/expenses-resume', async (req, res) => {
     try {

@@ -10,6 +10,7 @@ import expenseRoutes from './routes/expenses.js';
 import exchangeRate from './routes/exchangeRate.js'
 import incomeRoutes from './routes/incomes.js'
 import auth from './middleware/auth.js';
+import checkRole from './middleware/role.js';
 // Configuración de dotenv
 dotenv.config();
 
@@ -35,6 +36,7 @@ app.get('/', (req, res) => {
 // Ruta de Login
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
+
     try {
         const user = await User.findOne({ username });
         if (!user) {
@@ -47,12 +49,14 @@ app.post('/login', async (req, res) => {
             return res.status(400).json({ error: 'Contraseña incorrecta' });
         }
 
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+        const token = jwt.sign({ id: user._id, userType: user.userType }, process.env.JWT_SECRET, { expiresIn: '1d' });
+
         res.json({
             token,
             user: {
                 id: user._id,
                 username: user.username,
+                userType: user.userType
             }
         });
     } catch (error) {
@@ -63,13 +67,13 @@ app.post('/login', async (req, res) => {
 
 
 //Expenses API
-app.use('/expenses', auth, expenseRoutes);
+app.use('/expenses', auth, checkRole('admin'), expenseRoutes);
 
 //Exchange Rate API
-app.use('/exchange-rate', auth, exchangeRate);
+app.use('/exchange-rate', checkRole('admin'), auth, exchangeRate);
 
 // Rutas de facturas
-app.use('/invoices', auth, invoiceRoutes);
+app.use('/invoices', auth, checkRole('admin'), invoiceRoutes);
 
 // Rutas de Incomes
 app.use('/incomes', auth, incomeRoutes);

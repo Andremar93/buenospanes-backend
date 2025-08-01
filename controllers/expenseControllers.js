@@ -1,7 +1,7 @@
 import Expense from '../models/Expense.js';
 import Invoice from '../models/Invoice.js';
 import { getExchangeRateByDate } from '../controllers/exchangeRateController.js';
-import { appendToSheet, modifyRow } from '../googleapi/google.js'
+import { appendToSheet, modifyPaidValue, modifyFullRow } from '../googleapi/google.js'
 import { calculateAmounts } from '../helpers/currencyHelpers.js';
 import { formatDateForSheets } from '../helpers/dateHelpers.js';
 
@@ -66,14 +66,13 @@ export const createExpense = async (expenseData) => {
     });
 
     await newExpense.save();
-
+    console.log('newexpense', newExpense)
     return newExpense;
   } catch (error) {
     console.error('createExpense Error:', error);
     return { status: 500, message: 'Error interno del servidor' };
   }
 };
-
 
 export const createExpenseByInvoice = async (invoiceData) => {
   try {
@@ -94,7 +93,7 @@ export const createExpenseByInvoice = async (invoiceData) => {
     const baseAmount = currency === 'Bs' ? amountBs : amountDollars;
     ({ amountBs, amountDollars } = calculateAmounts(baseAmount, currency, rate.rate));
 
-    const editedInvoice = await modifyRow('facturas', googleRow, [true]);
+    const editedInvoice = await modifyPaidValue('facturas', googleRow, [true]);
     if (!editedInvoice) {
       return { status: 500, message: 'No se pudo editar la fila en Google Sheets (facturas)' };
     }
@@ -108,6 +107,7 @@ export const createExpenseByInvoice = async (invoiceData) => {
       type,
       subType,
       paymentMethod,
+      invoiceId,
       rate: rate.rate
     });
 
@@ -132,6 +132,7 @@ export const createExpenseByInvoice = async (invoiceData) => {
     });
 
     await newExpense.save();
+    console.log(newExpense)
     return newExpense;
 
   } catch (error) {
@@ -139,4 +140,98 @@ export const createExpenseByInvoice = async (invoiceData) => {
     return { status: 500, message: 'Error interno del servidor' };
   }
 };
+
+export const updateExpenseById = async (expenseId, updateData) => {
+  if (updateData._id) delete updateData._id;
+
+  // Opcional: asegurar que 'date' sea Date
+  // if (updateData.date) updateData.date = new Date(updateData.date);
+
+  const expenseInDatabase = await Expense.findById(expenseId);
+  if (!expenseInDatabase) {
+    throw { status: 404, message: `Factura con ID ${expenseId} no encontrada` };
+  }
+
+  const rateAsync = await getExchangeRateByDate(updateData.date);
+  if (!rateAsync) {
+    return { status: 404, message: `No existe tasa de cambio para la fecha ${new Date(date).toLocaleDateString()}` };
+  }
+
+  const rate = rateAsync.rate
+
+  const { amountBs, amountDollars } = calculateAmounts(updateData.amount, updateData.currency, rate);
+
+  console.log(amountBs, amountDollars, rate)
+
+  const googleRow = expenseInDatabase.googleRow
+
+  const { description,
+    currency,
+    date,
+    type,
+    subType,
+    paymentMethod } = updateData
+
+  const editedExpense = await modifyFullRow('gastos', googleRow,
+    [
+      description,
+      amountBs,
+      amountDollars,
+      currency,
+      date,
+      type,
+      subType,
+      paymentMethod,
+      rate
+    ]
+  );
+  if (!editedExpense) {
+    throw { status: 500, message: 'No se pudo editar la fila en Google Sheets (gastos)' };
+  }
+
+
+  const updatedExpense = await Expense.findByIdAndUpdate(expenseId, updateData, {
+    new: true,
+    runValidators: true
+  });
+
+  if (!updatedExpense) {
+    return res.status(404).json({ error: 'Gasto no encontrado' });
+  }
+  return updatedExpense
+
+}
+
+export const getExpenses = async (getData = {}) => {
+  try {
+    let from, to;
+
+    // Si vienen fechas personalizadas, úsalas
+    if (getData.startDate && getData.finishDate) {
+      from = new Date(getData.startDate);
+      to = new Date(getData.finishDate);
+      to.setHours(23, 59, 59, 999); // incluir todo el día final
+    } else {
+      // Por defecto: últimos 31 días
+      to = new Date();
+      from = new Date(to);
+      from.setDate(to.getDate() - 31);
+    }
+
+    const expenses = await Expense.find({
+      date: { $gte: from, $lte: to }
+    }).sort({ date: -1 });
+
+    return {
+      from,
+      to,
+      expenses
+    };
+
+  } catch (error) {
+    console.error('Error al obtener gastos:', error);
+    throw new Error('Error al obtener los gastos');
+  }
+};
+
 
