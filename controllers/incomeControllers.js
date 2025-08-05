@@ -72,67 +72,101 @@ export const getIncomes = async (getData = {}) => {
 export const createIncome = async (incomeData) => {
     try {
         const {
-            sitef,
-            puntoExterno,
-            efectivoBs,
-            efectivoDolares,
-            pagomovil,
-            biopago,
-            gastosBs,
-            gastosDolares,
-            totalSistema,
-            notas,
+            sitef = 0,
+            puntoExterno = 0,
+            efectivoBs = 0,
+            efectivoDolares = 0,
+            pagomovil = 0,
+            biopago = 0,
+            gastosBs = 0,
+            gastosDolares = 0,
+            totalSistema = 0,
+            notas = '',
             date
         } = incomeData;
 
         const rateAsync = await getExchangeRateByDate(date);
-
         if (!rateAsync) {
-            throw { status: 404, message: `No existe tasa de cambio para la fecha ${new Date(date).toLocaleDateString()}` };
+            throw {
+                status: 404,
+                message: `No existe tasa de cambio para la fecha ${new Date(date).toLocaleDateString()}`
+            };
         }
-
         const rate = rateAsync.rate;
 
-        const googleRow = await addToGoogleSheet(date, totalSistema,
-            efectivoBs,
-            efectivoDolares,
-            puntoExterno,
-            pagomovil,
-            biopago,
-            sitef,
-            gastosBs,
-            gastosDolares,
-            notas, rate)
-        if (!googleRow) {
-            throw { status: 500, message: 'No se pudo registrar el ingreso en Google Sheets' };
-        }
-
-        // Crear y guardar el nuevo gasto
-        const newIncome = new Income({
-            sitef,
-            puntoExterno,
-            efectivoBs,
-            efectivoDolares,
-            pagomovil,
-            biopago,
-            gastosBs,
-            sitef,
-            gastosDolares,
-            totalSistema,
-            notas, date, googleRow, rate
+        // Buscar si ya hay ingreso con esa fecha
+        const existingIncome = await Income.findOne({
+            date: {
+                $gte: new Date(date).setHours(0, 0, 0, 0),
+                $lte: new Date(date).setHours(23, 59, 59, 999)
+            }
         });
-        await newIncome.save();
 
-        return newIncome;
+        if (existingIncome) {
+            // Sumar valores nuevos a los existentes
+            const updatedData = {
+                sitef: existingIncome.sitef + sitef,
+                puntoExterno: existingIncome.puntoExterno + puntoExterno,
+                efectivoBs: existingIncome.efectivoBs + efectivoBs,
+                efectivoDolares: existingIncome.efectivoDolares + efectivoDolares,
+                pagomovil: existingIncome.pagomovil + pagomovil,
+                biopago: existingIncome.biopago + biopago,
+                gastosBs: existingIncome.gastosBs + gastosBs,
+                gastosDolares: existingIncome.gastosDolares + gastosDolares,
+                totalSistema: existingIncome.totalSistema + totalSistema,
+                notas: (existingIncome.notas ? existingIncome.notas + '\n' : '') + notas,
+                date,
+            };
+
+            // Usar tu función ya existente
+            return await updateIncome(existingIncome._id, updatedData);
+        } else {
+            // Si no existe, registrar normalmente
+            const googleRow = await addToGoogleSheet(
+                date,
+                totalSistema,
+                efectivoBs,
+                efectivoDolares,
+                puntoExterno,
+                pagomovil,
+                biopago,
+                sitef,
+                gastosBs,
+                gastosDolares,
+                notas,
+                rate
+            );
+
+            if (!googleRow) {
+                throw { status: 500, message: 'No se pudo registrar el ingreso en Google Sheets' };
+            }
+
+            const newIncome = new Income({
+                sitef,
+                puntoExterno,
+                efectivoBs,
+                efectivoDolares,
+                pagomovil,
+                biopago,
+                gastosBs,
+                gastosDolares,
+                totalSistema,
+                notas,
+                date,
+                googleRow,
+                rate
+            });
+
+            await newIncome.save();
+            return newIncome;
+        }
     } catch (error) {
-        // Si ya es un error lanzado manualmente, lo re-lanzamos
         if (error.status) throw error;
 
-        // Si es un error inesperado, lo manejamos como interno
         console.error('createIncome Error:', error);
         throw { status: 500, message: 'Error interno del servidor' };
     }
-}
+};
 
 export const updateIncome = async (incomeId, income) => {
     try {

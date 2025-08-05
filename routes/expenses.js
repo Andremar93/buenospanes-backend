@@ -21,7 +21,6 @@ router.post('/create', async (req, res) => {
 // Ruta para crear un gasto en /expenses/create by Invoice
 router.post('/create-by-invoice', async (req, res) => {
     try {
-        console.log('HIT CREATE BY INVOICE')
         const newExpenseByInvoice = await createExpenseByInvoice(req.body)
         res.status(201).json({ message: 'Gasto creado con éxito', expense: newExpenseByInvoice })
     } catch (error) {
@@ -37,13 +36,10 @@ router.post('/create-by-invoice', async (req, res) => {
 // Ruta para actualizar un gasto por su ID
 router.put('/:id', async (req, res) => {
     try {
-
-
         const expenseId = req.params.id;
         const updateData = { ...req.body };
 
         const response = await updateExpenseById(expenseId, updateData)
-        console.log(response)
         res.status(200).json({ message: 'Gasto actualizado con éxito', expense: response });
     } catch (error) {
         console.error('Error actualizando gasto:', error);

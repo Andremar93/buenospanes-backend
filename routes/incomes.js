@@ -8,10 +8,8 @@ const router = express.Router();
 router.post('/create', checkRole('admin', 'caja'), async (req, res) => {
     try {
         const newIncome = await createIncome(req.body)
-
         res.status(201).json({ message: 'Ingreso creado con éxito', income: newIncome });
     } catch (error) {
-
         const status = error.status || 500;
         const message = error.message || 'Error al crear el ingreso';
         res.status(status).json({ error: message });

@@ -9,6 +9,7 @@ import invoiceRoutes from './routes/invoices.js';
 import expenseRoutes from './routes/expenses.js';
 import exchangeRate from './routes/exchangeRate.js'
 import incomeRoutes from './routes/incomes.js'
+import employeeRoutes from './routes/employee.js'
 import auth from './middleware/auth.js';
 import checkRole from './middleware/role.js';
 // Configuración de dotenv
@@ -65,7 +66,6 @@ app.post('/login', async (req, res) => {
     }
 });
 
-
 //Expenses API
 app.use('/expenses', auth, checkRole('admin'), expenseRoutes);
 
@@ -77,6 +77,9 @@ app.use('/invoices', auth, checkRole('admin'), invoiceRoutes);
 
 // Rutas de Incomes
 app.use('/incomes', auth, incomeRoutes);
+
+// Rutas de employees
+app.use('/employees', auth, checkRole('admin'), employeeRoutes);
 
 // Middleware de manejo de errores
 app.use((err, req, res, next) => {
