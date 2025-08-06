@@ -37,6 +37,15 @@ export const createInvoice = async (invoiceData) => {
             throw { status: 400, message: 'Datos incompletos para crear la factura.' };
         }
 
+        // ✅ Validación de número de factura duplicado
+        const existingInvoice = await Invoice.findOne({ numeroFactura });
+        if (existingInvoice) {
+            throw {
+                status: 409,
+                message: `Ya existe una factura con el número ${numeroFactura}.`
+            };
+        }
+
         const rate = await getExchangeRateByDate(date);
         if (!rate) {
             throw {
@@ -74,10 +83,8 @@ export const createInvoice = async (invoiceData) => {
         return newInvoice;
 
     } catch (error) {
-        // Si ya es un error lanzado manualmente, lo re-lanzamos
+        console.log(error, 'error')
         if (error.status) throw error;
-
-        // Si es un error inesperado, lo manejamos como interno
         console.error('createInvoice Error:', error);
         throw { status: 500, message: 'Error interno del servidor' };
     }

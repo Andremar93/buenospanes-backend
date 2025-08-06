@@ -8,7 +8,7 @@ const router = express.Router();
 router.post('/create', async (req, res) => {
     try {
         const newEmployee = await createEmployee(req.body);
-        res.status(201).json({ message: 'Empleado creado con éxito', rate: newEmployee });
+        res.status(201).json({ message: 'Empleado creado con éxito', employee: newEmployee });
     } catch (error) {
         console.log(error)
         res.status(500).json({ error: 'Error al crear al empleado' });
@@ -16,10 +16,12 @@ router.post('/create', async (req, res) => {
 });
 
 
-router.get('/get/', async (req, res) => {
+router.get('/get', async (req, res) => {
     try {
-        const employees = getEmployees()
-        res.status(200).json(rate);
+        console.log('GET EMPLOYEES')
+        const employees = await getEmployees()
+        res.status(201).json({ message: 'Empleados obtenidos', employees: employees });
+
     } catch (error) {
         console.log(error);
         res.status(500).json({ error: 'Error al obtener la tasa de cambio' });

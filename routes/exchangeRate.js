@@ -8,7 +8,7 @@ router.post('/create', async (req, res) => {
     try {
         const { rate } = req.body;
         const now = new Date();
-        now.setUTCHours(now.getUTCHours() - 4); 
+        now.setUTCHours(now.getUTCHours() - 4);
         const date = now.toISOString().split('T')[0];
         const newRate = new ExchangeRate({ rate, date });
         await newRate.save();
@@ -22,10 +22,8 @@ router.post('/create', async (req, res) => {
 // Obtener tasa de cambio para una fecha específica
 router.get('/get/:date', async (req, res) => {
     try {
-
-        const requestedDate = new Date(req.params.date);
-        // Buscar la tasa solo si la fecha coincide exactamente
-        const rate = await ExchangeRate.findOne({ date: { $eq: requestedDate } });
+        const requestedDate = req.params.date; // como string
+        const rate = await ExchangeRate.findOne({ date: requestedDate });
 
         if (!rate) {
             return res.status(204).json({ message: 'No se encontró tasa de cambio para la fecha especificada' });
@@ -33,11 +31,9 @@ router.get('/get/:date', async (req, res) => {
 
         res.status(200).json(rate);
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ error: 'Error al obtener la tasa de cambio' });
+        console.log('Error al obtener tasa de cambio:', error);
+        res.status(500).json({ message: 'Error al obtener la tasa de cambio' });
     }
 });
-
-
 
 export default router;

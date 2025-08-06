@@ -70,7 +70,7 @@ app.post('/login', async (req, res) => {
 app.use('/expenses', auth, checkRole('admin'), expenseRoutes);
 
 //Exchange Rate API
-app.use('/exchange-rate', checkRole('admin'), auth, exchangeRate);
+app.use('/exchange-rate', auth, checkRole('admin'), exchangeRate);
 
 // Rutas de facturas
 app.use('/invoices', auth, checkRole('admin'), invoiceRoutes);

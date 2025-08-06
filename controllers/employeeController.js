@@ -30,13 +30,11 @@ export const createEmployee = async (employeeData) => {
 
 export const getEmployees = async () => {
     try {
-        const employees = await Employee.find();
-        return employees;
+        return await Employee.find();
     } catch (error) {
         if (error.status) throw error; // Custom thrown error, rethrow
 
         console.error('getEmployees Error:', error);
-
         // Throw an Error instance with status property
         const serverError = new Error('Error interno del servidor');
         serverError.status = 500;

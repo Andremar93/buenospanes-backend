@@ -4,7 +4,7 @@ const employeeSchema = new mongoose.Schema({
     weeklySalary: { type: Number, required: true }, // Monto en $
     name: { type: String, required: true }, // Nombre
     accountNumber: { type: String, required: false }, // Numero de cuenta
-    id: { type: String, required: false }, // Tipo de gasto
+    idNumber: { type: String, required: false }, // Tipo de gasto
 }, { timestamps: true });
 
 const Employee = mongoose.model('Employee', employeeSchema);
