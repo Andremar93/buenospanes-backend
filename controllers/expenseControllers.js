@@ -1,11 +1,25 @@
 import Expense from '../models/Expense.js';
 import Invoice from '../models/Invoice.js';
 import { getExchangeRateByDate } from '../controllers/exchangeRateController.js';
-import { appendToSheet, modifyPaidValue, modifyFullRow } from '../googleapi/google.js'
+import {
+  appendToSheet,
+  modifyPaidValue,
+  modifyFullRow
+} from '../googleapi/google.js';
 import { calculateAmounts } from '../helpers/currencyHelpers.js';
 import { formatDateForSheets } from '../helpers/dateHelpers.js';
 
-async function addExpenseToSheet({ description, amountBs, amountDollars, currency, date, type, subType, paymentMethod, rate }) {
+async function addExpenseToSheet({
+  description,
+  amountBs,
+  amountDollars,
+  currency,
+  date,
+  type,
+  subType,
+  paymentMethod,
+  rate
+}) {
   const values = [
     description,
     parseFloat(amountBs),
@@ -19,22 +33,38 @@ async function addExpenseToSheet({ description, amountBs, amountDollars, currenc
   ];
 
   return appendToSheet('gastos', [values], {
-    "C": { numberFormat: { type: "CURRENCY", pattern: "$#,##0.00" } },
-    "E": { numberFormat: { type: "DATE", pattern: "yyyy-mm-dd" } },
-    "I": { numberFormat: { type: "CURRENCY", pattern: "$#,##0.00" } },
+    C: { numberFormat: { type: 'CURRENCY', pattern: '$#,##0.00' } },
+    E: { numberFormat: { type: 'DATE', pattern: 'yyyy-mm-dd' } },
+    I: { numberFormat: { type: 'CURRENCY', pattern: '$#,##0.00' } }
   });
 }
 
 export const createExpense = async (expenseData) => {
   try {
-    const { description, amount, currency, date, type, subType, paymentMethod, paid } = expenseData;
+    const {
+      description,
+      amount,
+      currency,
+      date,
+      type,
+      subType,
+      paymentMethod,
+      paid
+    } = expenseData;
 
     const rate = await getExchangeRateByDate(date);
     if (!rate) {
-      return { status: 404, message: `No existe tasa de cambio para la fecha ${new Date(date).toLocaleDateString()}` };
+      return {
+        status: 404,
+        message: `No existe tasa de cambio para la fecha ${new Date(date).toLocaleDateString()}`
+      };
     }
 
-    const { amountBs, amountDollars } = calculateAmounts(amount, currency, rate.rate);
+    const { amountBs, amountDollars } = calculateAmounts(
+      amount,
+      currency,
+      rate.rate
+    );
 
     const googleRow = await addExpenseToSheet({
       description,
@@ -47,9 +77,12 @@ export const createExpense = async (expenseData) => {
       paymentMethod,
       rate: rate.rate
     });
-    console.log(`googleRow ${googleRow}`)
+    console.log(`googleRow ${googleRow}`);
     if (!googleRow) {
-      return { status: 500, message: 'No se pudo registrar el gasto en Google Sheets' };
+      return {
+        status: 500,
+        message: 'No se pudo registrar el gasto en Google Sheets'
+      };
     }
 
     const newExpense = new Expense({
@@ -66,7 +99,7 @@ export const createExpense = async (expenseData) => {
     });
 
     await newExpense.save();
-    console.log('newexpense', newExpense)
+    console.log('newexpense', newExpense);
     return newExpense;
   } catch (error) {
     console.error('createExpense Error:', error);
@@ -76,10 +109,13 @@ export const createExpense = async (expenseData) => {
 
 export const createExpenseByInvoice = async (invoiceData) => {
   try {
-    const { invoiceId, paymentMethod, date, subType } = invoiceData;
+    const { id: invoiceId, paymentMethod, date, subType } = invoiceData.invoiceId;
     const invoice = await Invoice.findById(invoiceId);
     if (!invoice) {
-      return { status: 404, message: `Factura con ID ${invoiceId} no encontrada` };
+      return {
+        status: 404,
+        message: `Factura con ID ${invoiceId} no encontrada`
+      };
     }
 
     const { description, currency, type, googleRow } = invoice;
@@ -87,15 +123,25 @@ export const createExpenseByInvoice = async (invoiceData) => {
 
     const rate = await getExchangeRateByDate(date);
     if (!rate) {
-      return { status: 404, message: `No existe tasa de cambio para la fecha ${new Date(date).toLocaleDateString()}` };
+      return {
+        status: 404,
+        message: `No existe tasa de cambio para la fecha ${new Date(date).toLocaleDateString()}`
+      };
     }
 
     const baseAmount = currency === 'Bs' ? amountBs : amountDollars;
-    ({ amountBs, amountDollars } = calculateAmounts(baseAmount, currency, rate.rate));
+    ({ amountBs, amountDollars } = calculateAmounts(
+      baseAmount,
+      currency,
+      rate.rate
+    ));
 
     const editedInvoice = await modifyPaidValue('facturas', googleRow, [true]);
     if (!editedInvoice) {
-      return { status: 500, message: 'No se pudo editar la fila en Google Sheets (facturas)' };
+      return {
+        status: 500,
+        message: 'No se pudo editar la fila en Google Sheets (facturas)'
+      };
     }
 
     const googleRowExpense = await addExpenseToSheet({
@@ -112,7 +158,10 @@ export const createExpenseByInvoice = async (invoiceData) => {
     });
 
     if (!googleRowExpense) {
-      return { status: 500, message: 'No se pudo registrar el gasto en Google Sheets' };
+      return {
+        status: 500,
+        message: 'No se pudo registrar el gasto en Google Sheets'
+      };
     }
 
     invoice.paid = true;
@@ -132,9 +181,8 @@ export const createExpenseByInvoice = async (invoiceData) => {
     });
 
     await newExpense.save();
-    console.log(newExpense)
+    console.log(newExpense);
     return newExpense;
-
   } catch (error) {
     console.error('createExpenseByInvoice Error:', error);
     return { status: 500, message: 'Error interno del servidor' };
@@ -154,53 +202,59 @@ export const updateExpenseById = async (expenseId, updateData) => {
 
   const rateAsync = await getExchangeRateByDate(updateData.date);
   if (!rateAsync) {
-    return { status: 404, message: `No existe tasa de cambio para la fecha ${new Date(date).toLocaleDateString()}` };
+    return {
+      status: 404,
+      message: `No existe tasa de cambio para la fecha ${new Date(date).toLocaleDateString()}`
+    };
   }
 
-  const rate = rateAsync.rate
+  const rate = rateAsync.rate;
 
-  const { amountBs, amountDollars } = calculateAmounts(updateData.amount, updateData.currency, rate);
+  const { amountBs, amountDollars } = calculateAmounts(
+    updateData.amount,
+    updateData.currency,
+    rate
+  );
 
-  console.log(amountBs, amountDollars, rate)
+  console.log(amountBs, amountDollars, rate);
 
-  const googleRow = expenseInDatabase.googleRow
+  const googleRow = expenseInDatabase.googleRow;
 
-  const { description,
+  const { description, currency, date, type, subType, paymentMethod } =
+    updateData;
+
+  const editedExpense = await modifyFullRow('gastos', googleRow, [
+    description,
+    amountBs,
+    amountDollars,
     currency,
     date,
     type,
     subType,
-    paymentMethod } = updateData
-
-  const editedExpense = await modifyFullRow('gastos', googleRow,
-    [
-      description,
-      amountBs,
-      amountDollars,
-      currency,
-      date,
-      type,
-      subType,
-      paymentMethod,
-      rate
-    ]
-  );
+    paymentMethod,
+    rate
+  ]);
   if (!editedExpense) {
-    throw { status: 500, message: 'No se pudo editar la fila en Google Sheets (gastos)' };
+    throw {
+      status: 500,
+      message: 'No se pudo editar la fila en Google Sheets (gastos)'
+    };
   }
 
-
-  const updatedExpense = await Expense.findByIdAndUpdate(expenseId, updateData, {
-    new: true,
-    runValidators: true
-  });
+  const updatedExpense = await Expense.findByIdAndUpdate(
+    expenseId,
+    updateData,
+    {
+      new: true,
+      runValidators: true
+    }
+  );
 
   if (!updatedExpense) {
-    return res.status(404).json({ error: 'Gasto no encontrado' });
+    throw { status: 404, message: 'Gasto no encontrado' };
   }
-  return updatedExpense
-
-}
+  return updatedExpense;
+};
 
 export const getExpenses = async (getData = {}) => {
   try {
@@ -227,11 +281,8 @@ export const getExpenses = async (getData = {}) => {
       to,
       expenses
     };
-
   } catch (error) {
     console.error('Error al obtener gastos:', error);
     throw new Error('Error al obtener los gastos');
   }
 };
-
-

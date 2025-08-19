@@ -1,11 +1,17 @@
 import express from 'express';
 import Invoice from '../models/Invoice.js';
-import { createInvoice, deleteInvoice, updateInvoice } from '../controllers/invoiceControllers.js'
+import {
+  createInvoice,
+  deleteInvoice,
+  updateInvoice
+} from '../controllers/invoiceControllers.js';
+import auth from '../middleware/auth.js';
+import checkRole from '../middleware/role.js';
 
 const router = express.Router();
 
 // Crear una nueva factura
-router.post('/create', async (req, res) => {
+router.post('/create', auth, checkRole('admin'), async (req, res) => {
   try {
     const newInvoice = await createInvoice(req.body);
     res.status(201).json({
@@ -19,19 +25,20 @@ router.post('/create', async (req, res) => {
   }
 });
 
-
 // Obtener todas las facturas
-router.get('/get', async (req, res) => {
+router.get('/get', auth, checkRole('admin'), async (req, res) => {
   try {
     const invoices = await Invoice.find({ paid: false }).sort({ dueDate: 1 });
     res.status(200).json(invoices);
   } catch (error) {
-    res.status(400).json({ message: 'Error al obtener las facturas', error: error.message });
+    res
+      .status(400)
+      .json({ message: 'Error al obtener las facturas', error: error.message });
   }
 });
 
 // Obtener una factura por ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', auth, checkRole('admin'), async (req, res) => {
   try {
     const invoice = await Invoice.findById(req.params.id);
     if (!invoice) {
@@ -39,34 +46,46 @@ router.get('/:id', async (req, res) => {
     }
     res.status(200).json(invoice);
   } catch (error) {
-    res.status(400).json({ message: 'Error al obtener la factura', error: error.message });
+    res
+      .status(400)
+      .json({ message: 'Error al obtener la factura', error: error.message });
   }
 });
 
 // Actualizar una factura
-router.put('/:id', async (req, res) => {
+router.put('/:id', auth, checkRole('admin'), async (req, res) => {
   try {
-    const updatedInvoice = await updateInvoice(req.params.id, req.body)
+    console.log('updateInvoice');
+    const updatedInvoice = await updateInvoice(req.params.id, req.body);
     if (!updatedInvoice) {
       return res.status(404).json({ message: 'Factura no encontrada' });
     }
-    res.status(200).json({ message: 'Factura actualizada', invoice: updatedInvoice });
+    res
+      .status(200)
+      .json({ message: 'Factura actualizada', invoice: updatedInvoice });
   } catch (error) {
-    res.status(400).json({ message: 'Error al actualizar la factura', error: error.message });
+    res
+      .status(400)
+      .json({
+        message: 'Error al actualizar la factura',
+        error: error.message
+      });
   }
 });
 
 // Eliminar una factura
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', auth, checkRole('admin'), async (req, res) => {
   try {
-    const deletedInvoice = await deleteInvoice(req.params.id)
+    const deletedInvoice = await deleteInvoice(req.params.id);
 
     if (!deletedInvoice) {
       return res.status(404).json({ message: 'Factura no encontrada' });
     }
     res.status(200).json({ message: 'Factura eliminada' });
   } catch (error) {
-    res.status(400).json({ message: 'Error al eliminar la factura', error: error.message });
+    res
+      .status(400)
+      .json({ message: 'Error al eliminar la factura', error: error.message });
   }
 });
 

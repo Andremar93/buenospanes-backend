@@ -1,99 +1,157 @@
 import express from 'express';
 import mongoose from 'mongoose';
-import dotenv from 'dotenv';
 import cors from 'cors';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import User from './models/User.js';
-import invoiceRoutes from './routes/invoices.js';
-import expenseRoutes from './routes/expenses.js';
-import exchangeRate from './routes/exchangeRate.js'
-import incomeRoutes from './routes/incomes.js'
-import employeeRoutes from './routes/employee.js'
-import auth from './middleware/auth.js';
-import checkRole from './middleware/role.js';
-// Configuración de dotenv
-dotenv.config();
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import compression from 'compression';
+
+// Importar configuración
+import config from './config/config.js';
+
+// Importar middleware de errores
+import {
+  errorHandler,
+  notFound,
+  methodNotAllowed
+} from './middleware/errorHandler.js';
+
+// Importar rutas principales
+import routes from './routes/index.js';
 
 // Crear servidor Express
 const app = express();
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// Middleware de seguridad
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ['self'],
+        styleSrc: ['self', 'unsafe-inline'],
+        scriptSrc: ['self'],
+        imgSrc: ['self', 'data:', 'https:']
+      }
+    },
+    crossOriginEmbedderPolicy: false
+  })
+);
+
+// Configuración de CORS
+app.use(
+  cors({
+    origin: config.server.corsOrigin,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  })
+);
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: config.security.rateLimitWindowMs,
+  max: config.security.rateLimitMax,
+  message: {
+    error: 'Demasiadas peticiones desde esta IP',
+    message: 'Por favor, intente nuevamente más tarde',
+    retryAfter: Math.ceil(config.security.rateLimitWindowMs / 1000)
+  },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+// Rate limiting solo para rutas protegidas, no para autenticación
+app.use('/api/expenses', limiter);
+app.use('/api/exchange-rate', limiter);
+app.use('/api/invoices', limiter);
+app.use('/api/incomes', limiter);
+app.use('/api/employees', limiter);
+
+// Middleware de compresión
+app.use(compression());
+
+// Middleware para parsear JSON
+app.use(
+  express.json({
+    limit: config.security.maxRequestSize
+  })
+);
+
+// Middleware para parsear URL encoded
+app.use(
+  express.urlencoded({
+    extended: true,
+    limit: config.security.maxRequestSize
+  })
+);
 
 // Conectar a MongoDB
-mongoose.connect(process.env.MONGO_URI, {
-    dbName: 'panaderia',
-})
-    .then(() => console.log("✅ Conectado a MongoDB"))
-    .catch((error) => console.error("Error al conectar a MongoDB:", error));
+const connectDB = async () => {
+  try {
+    await mongoose.connect(config.database.uri, {
+      dbName: config.database.dbName,
+      ...config.database.options
+    });
+    console.log('✅ Conectado a MongoDB');
+  } catch (error) {
+    console.error('❌ Error al conectar a MongoDB:', error);
+    process.exit(1);
+  }
+};
 
-// Ruta de prueba
-app.get('/', (req, res) => {
-    res.send('Servidor funcionando correctamente');
+// Manejar eventos de conexión de MongoDB
+mongoose.connection.on('error', (err) => {
+  console.error('❌ Error de conexión MongoDB:', err);
 });
 
-// Ruta de Login
-app.post('/login', async (req, res) => {
-    const { username, password } = req.body;
-
-    try {
-        const user = await User.findOne({ username });
-        if (!user) {
-            console.log('Usuario no encontrado');
-            return res.status(400).json({ error: 'Usuario no encontrado' });
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ error: 'Contraseña incorrecta' });
-        }
-
-        const token = jwt.sign({ id: user._id, userType: user.userType }, process.env.JWT_SECRET, { expiresIn: '1d' });
-
-        res.json({
-            token,
-            user: {
-                id: user._id,
-                username: user.username,
-                userType: user.userType
-            }
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Error en el servidor' });
-    }
+mongoose.connection.on('disconnected', () => {
+  console.log('⚠️  MongoDB desconectado');
 });
 
-//Expenses API
-app.use('/expenses', auth, checkRole('admin'), expenseRoutes);
-
-//Exchange Rate API
-app.use('/exchange-rate', auth, checkRole('admin'), exchangeRate);
-
-// Rutas de facturas
-app.use('/invoices', auth, checkRole('admin'), invoiceRoutes);
-
-// Rutas de Incomes
-app.use('/incomes', auth, incomeRoutes);
-
-// Rutas de employees
-app.use('/employees', auth, checkRole('admin'), employeeRoutes);
-
-// Middleware de manejo de errores
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ mensaje: "Ocurrió un error en el servidor", error: err.message });
+// Manejar señales de terminación
+process.on('SIGINT', async () => {
+  try {
+    await mongoose.connection.close();
+    console.log('✅ Conexión MongoDB cerrada por terminación de la aplicación');
+    process.exit(0);
+  } catch (err) {
+    console.error('❌ Error al cerrar conexión MongoDB:', err);
+    process.exit(1);
+  }
 });
 
+// Rutas de la API
+app.use('/api', routes);
 
-app.get("/ping", (req, res) => {
-    res.status(200).send("pong");
-});
+// Middleware para rutas no encontradas
+app.use('*', notFound);
+
+// Middleware para métodos HTTP no permitidos
+app.use(methodNotAllowed);
+
+// Middleware de manejo de errores (debe ser el último)
+app.use(errorHandler);
 
 // Puerto de ejecución
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-});
+const PORT = config.server.port;
+
+// Inicializar servidor
+const startServer = async () => {
+  try {
+    // Conectar a la base de datos
+    await connectDB();
+
+    // Iniciar servidor
+    app.listen(PORT, () => {
+      console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+      console.log(`🌍 Entorno: ${config.server.nodeEnv}`);
+      console.log(`📊 Base de datos: ${config.database.dbName}`);
+      console.log(`🔐 JWT expira en: ${config.jwt.expiresIn}`);
+    });
+  } catch (error) {
+    console.error('❌ Error al iniciar servidor:', error);
+    process.exit(1);
+  }
+};
+
+// Iniciar servidor
+startServer();
