@@ -14,7 +14,8 @@ const invoiceSchema = new mongoose.Schema(
     date: { type: Date, default: Date.now, required: true }, // Fecha del gasto
     paid: { type: Boolean, required: true },
     googleRow: { type: Number, required: true },
-    numeroFactura: { type: String, required: false }
+    numeroFactura: { type: String, required: false },
+    createdBy: { type: String, required: true }
   },
   { timestamps: true }
 );

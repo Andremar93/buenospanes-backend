@@ -43,7 +43,7 @@ async function eraseInGoogleSheet(googleRow) {
 // Crear un nuevo gasto
 export const createInvoice = async (invoiceData) => {
   try {
-    const { dueDate, supplier, type, amount, currency, numeroFactura, date } =
+    const { dueDate, supplier, type, amount, currency, numeroFactura, date, createdBy } =
       invoiceData;
 
     if (
@@ -54,12 +54,16 @@ export const createInvoice = async (invoiceData) => {
       !type ||
       !date ||
       !numeroFactura
+      //  ||
+      // !createdBy
     ) {
       throw {
         status: 400,
         message: 'Datos incompletos para crear la factura.'
       };
     }
+
+    createdBy = 'miusuario'
 
     // ✅ Validación de número de factura duplicado
     const existingInvoice = await Invoice.findOne({ numeroFactura });
@@ -115,7 +119,8 @@ export const createInvoice = async (invoiceData) => {
       date,
       paid: false,
       googleRow,
-      numeroFactura
+      numeroFactura,
+      createdBy
     });
 
     await newInvoice.save();
@@ -152,7 +157,7 @@ export const deleteInvoice = async (invoiceId) => {
 
 export const updateInvoice = async (invoiceId, invoice) => {
   try {
-    const { supplier, dueDate, type, amount, currency, date, numeroFactura } =
+    const { supplier, dueDate, type, amount, currency, date, numeroFactura, createdBy } =
       invoice;
 
     const invoiceInDatabase = await Invoice.findById(invoiceId);
@@ -214,7 +219,8 @@ export const updateInvoice = async (invoiceId, invoice) => {
         dueDate,
         status: false,
         currency,
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
+        createdBy
       },
       { new: true }
     );

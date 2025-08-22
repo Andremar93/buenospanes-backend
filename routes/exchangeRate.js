@@ -27,8 +27,8 @@ router.post('/create', auth, checkRole('admin'), async (req, res) => {
 router.get('/get/:date', auth, checkRole('admin'), async (req, res) => {
   try {
     const requestedDate = req.params.date; // como string
-    const rate = await ExchangeRate.findOne({ date: requestedDate });
-
+    const rate = await ExchangeRate.findOne({ date: requestedDate }).select('date rate -_id');
+    console.log(rate);
     if (!rate) {
       return res
         .status(204)
