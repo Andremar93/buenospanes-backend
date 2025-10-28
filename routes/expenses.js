@@ -35,7 +35,7 @@ router.post('/create-by-invoice', auth, checkRole('admin'), async (req, res) => 
       .status(201)
       .json({
         message: 'Gasto creado con éxito',
-        expense: newExpenseByInvoice
+        invoice: newExpenseByInvoice
       });
   } catch (error) {
     console.log(error);
