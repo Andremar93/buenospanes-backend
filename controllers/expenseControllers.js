@@ -40,72 +40,71 @@ async function addExpenseToSheet({
 }
 
 export const createExpense = async (expenseData) => {
-  try {
-    const {
-      description,
-      amount,
-      currency,
-      date,
-      type,
-      subType,
-      paymentMethod,
-      paid
-    } = expenseData;
+  const {
+    description,
+    amount,
+    currency,
+    date,
+    type,
+    subType,
+    paymentMethod,
+    paid
+  } = expenseData;
 
-    const rate = await getExchangeRateByDate(date);
-    if (!rate) {
-      return {
-        status: 404,
-        message: `No existe tasa de cambio para la fecha ${new Date(date).toLocaleDateString()}`
-      };
-    }
+  const rate = await getExchangeRateByDate(date);
 
-    const { amountBs, amountDollars } = calculateAmounts(
-      amount,
-      currency,
-      rate.rate
+  if (!rate) {
+    const error = new Error(
+      `No existe tasa de cambio para la fecha ${new Date(date).toLocaleDateString()}`
     );
-
-    const googleRow = await addExpenseToSheet({
-      description,
-      amountBs,
-      amountDollars,
-      currency,
-      date,
-      type,
-      subType,
-      paymentMethod,
-      rate: rate.rate
-    });
-    console.log(`googleRow ${googleRow}`);
-    if (!googleRow) {
-      return {
-        status: 500,
-        message: 'No se pudo registrar el gasto en Google Sheets'
-      };
-    }
-
-    const newExpense = new Expense({
-      description,
-      amountBs,
-      amountDollars,
-      currency,
-      date,
-      type,
-      subType,
-      paymentMethod,
-      paid,
-      googleRow
-    });
-
-    await newExpense.save();
-    console.log('newexpense', newExpense);
-    return newExpense;
-  } catch (error) {
-    console.error('createExpense Error:', error);
-    return { status: 500, message: 'Error interno del servidor' };
+    error.status = 404;
+    throw error;
   }
+
+  const { amountBs, amountDollars } = calculateAmounts(
+    amount,
+    currency,
+    rate.rate
+  );
+
+  const googleRow = await addExpenseToSheet({
+    description,
+    amountBs,
+    amountDollars,
+    currency,
+    date,
+    type,
+    subType,
+    paymentMethod,
+    rate: rate.rate
+  });
+
+  if (!googleRow) {
+    const error = new Error(
+      'No se pudo registrar el gasto en Google Sheets'
+    );
+    error.status = 500;
+    throw error;
+  }
+
+  const newExpense = new Expense({
+    description,
+    amountBs,
+    amountDollars,
+    currency,
+    date,
+    type,
+    subType,
+    paymentMethod,
+    paid,
+    googleRow
+  });
+
+  await newExpense.save();
+
+  return newExpense;
 };
+
 
 export const createExpenseByInvoice = async (invoiceData) => {
   try {
