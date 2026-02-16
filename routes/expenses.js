@@ -15,11 +15,11 @@ const router = express.Router();
 router.post('/create', auth, checkRole('admin'), async (req, res) => {
   try {
     const newExpense = await createExpense(req.body);
+    console.log('newExpense',newExpense)
     res
       .status(201)
       .json({ message: 'Gasto creado con éxito', expense: newExpense });
   } catch (error) {
-    console.log(error);
     // Si el error tiene un status definido, lo usamos, si no, usamos 500
     const status = error.status || 500;
     const message = error.message || 'Error al crear el gasto';
