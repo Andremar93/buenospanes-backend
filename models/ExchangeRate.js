@@ -10,4 +10,4 @@ const exchangeRateSchema = new mongoose.Schema(
 
 const ExchangeRate = mongoose.model('ExchangeRate', exchangeRateSchema);
 
-export default ExchangeRate;
+export default ExchangeRate; 
