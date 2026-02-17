@@ -201,10 +201,12 @@ export const updateExpenseById = async (expenseId, updateData) => {
 
   const rateAsync = await getExchangeRateByDate(updateData.date);
   if (!rateAsync) {
-    return {
-      status: 404,
-      message: `No existe tasa de cambio para la fecha ${new Date(date).toLocaleDateString()}`
-    };
+
+    const error = new Error(
+      `No existe tasa de cambio para la fecha ${new Date(updateData.date).toLocaleDateString()}`
+    );
+    error.status = 404;
+    throw error;
   }
 
   const rate = rateAsync.rate;
@@ -214,8 +216,6 @@ export const updateExpenseById = async (expenseId, updateData) => {
     updateData.currency,
     rate
   );
-
-  console.log(amountBs, amountDollars, rate);
 
   const googleRow = expenseInDatabase.googleRow;
 
@@ -240,14 +240,22 @@ export const updateExpenseById = async (expenseId, updateData) => {
     };
   }
 
+  const updatePayload = {
+    ...updateData,
+    amountBs,
+    amountDollars
+  };
+
   const updatedExpense = await Expense.findByIdAndUpdate(
     expenseId,
-    updateData,
+    updatePayload,
     {
       new: true,
       runValidators: true
     }
   );
+
+  console.log(updateData, updatedExpense)
 
   if (!updatedExpense) {
     throw { status: 404, message: 'Gasto no encontrado' };
