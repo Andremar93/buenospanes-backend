@@ -2,6 +2,8 @@ import express from 'express';
 import ExchangeRate from '../models/ExchangeRate.js';
 import auth from '../middleware/auth.js';
 import checkRole from '../middleware/role.js';
+import { fetchAndSaveBcvRate, fetchAndSaveBcvRateForDate } from '../controllers/exchangeRateController.js';
+
 
 const router = express.Router();
 
@@ -27,14 +29,25 @@ router.post('/create', auth, checkRole('admin'), async (req, res) => {
 router.get('/get/:date', auth, checkRole('admin'), async (req, res) => {
   try {
     const requestedDate = req.params.date; // como string
-    const rate = await ExchangeRate.findOne({ date: requestedDate });
+    let rate = await ExchangeRate.findOne({ date: requestedDate });
+    console.log(requestedDate, rate)
+   
 
     if (!rate) {
-      return res
-        .status(204)
-        .json({
-          message: 'No se encontró tasa de cambio para la fecha especificada'
+      try {
+        rate = await fetchAndSaveBcvRateForDate(requestedDate);
+      } catch (err) {
+        console.log('Error al obtener tasa BCV desde API:', err.message);
+        return res.status(502).json({
+          message: 'No se encontró tasa de cambio para la fecha y no se pudo obtener desde BCV',
         });
+      }
+    }
+
+    if (!rate) {
+      return res.status(204).json({
+        message: 'No se encontró tasa de cambio para la fecha especificada',
+      });
     }
 
     res.status(200).json(rate);
@@ -43,5 +56,10 @@ router.get('/get/:date', auth, checkRole('admin'), async (req, res) => {
     res.status(500).json({ message: 'Error al obtener la tasa de cambio' });
   }
 });
+
+
+// POST /api/exchange-rate/bcv
+router.post("/bcv", auth, fetchAndSaveBcvRate);
+
 
 export default router;
