@@ -12,10 +12,16 @@ const router = express.Router();
 // Ruta para crear un gasto en /expenses/create
 router.post('/create', auth, checkRole('admin', 'caja'), async (req, res) => {
   try {
-    const newIncome = await createIncome(req.body);
-    res
-      .status(201)
-      .json({ message: 'Ingreso creado con éxito', income: newIncome });
+    const result = await createIncome(req.body, req.user.id);
+    const income = result.income ?? result;
+    const createdExpenses = result.createdExpenses ?? [];
+    const createdDebts = result.createdDebts ?? [];
+    res.status(201).json({
+      message: 'Ingreso creado con éxito',
+      income,
+      createdExpenses,
+      createdDebts
+    });
   } catch (error) {
     const status = error.status || 500;
     const message = error.message || 'Error al crear el ingreso';

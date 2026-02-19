@@ -180,7 +180,7 @@ export const createExpenseByInvoice = async (invoiceData) => {
     });
 
     await newExpense.save();
-    console.log(newExpense);
+
     return newExpense;
   } catch (error) {
     console.error('createExpenseByInvoice Error:', error);
@@ -255,7 +255,6 @@ export const updateExpenseById = async (expenseId, updateData) => {
     }
   );
 
-  console.log(updateData, updatedExpense)
 
   if (!updatedExpense) {
     throw { status: 404, message: 'Gasto no encontrado' };

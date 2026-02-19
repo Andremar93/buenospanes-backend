@@ -9,7 +9,7 @@ import { getBcvRateSafe } from "../helpers/getBcvRate.js";
 export const fetchAndSaveBcvRateForDate = async (dateStr) => {
   const targetDate = new Date(dateStr);
   // targetDate.setHours(0, 0, 0, 0);
-  console.log("HERE",dateStr, targetDate)
+
 
   const existing = await ExchangeRate.findOne({
     date: { $gte: targetDate, $lt: new Date(targetDate.getTime() + 24 * 60 * 60 * 1000) },
