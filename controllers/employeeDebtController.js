@@ -14,6 +14,7 @@ export const createEmployeeDebt = async (debtData, userId) => {
       notes = '',
       type = 'standard', // 'standard' or 'vale'
       exchangeRateSnapshot = null, // optional, needed if type === 'vale'
+      paymentDate,
       items = [],
     } = debtData;
 
@@ -56,6 +57,7 @@ export const createEmployeeDebt = async (debtData, userId) => {
       notes,
       createdBy: userId,
       type,
+      paymentDate: paymentDate ? new Date(paymentDate) : undefined,
       exchangeRateSnapshot: exchangeRateSnapshot || undefined,
       items: validatedItems,
     });
