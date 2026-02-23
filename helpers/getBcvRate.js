@@ -21,9 +21,9 @@ export const getBcvRate = async (date = null) => {
     }
 
     const { data } = await axios.get(url);
-    console.log('DATA:',data, date)
+
     const usdRate = data?.dollar;
-    console.log(usdRate)
+
     if (!usdRate) {
         throw new Error("No rate available");
     }
@@ -38,6 +38,7 @@ export const getBcvRateSafe = async (date = null) => {
     try {
         return await getBcvRate(date);
     } catch (err) {
+        console.log('ERROR OBJECT:', err.response?.status, err.message);
         if (!date) throw err;
 
         const d = new Date(date);

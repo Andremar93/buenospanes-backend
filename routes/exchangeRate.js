@@ -37,7 +37,7 @@ router.get('/get/:date', auth, checkRole('admin'), async (req, res) => {
       try {
         rate = await fetchAndSaveBcvRateForDate(requestedDate);
       } catch (err) {
-        console.log('Error al obtener tasa BCV desde API:', err.message);
+        console.log('Error al obtener tasa BCV desde API:', err.message, rate);
         return res.status(502).json({
           message: 'No se encontró tasa de cambio para la fecha y no se pudo obtener desde BCV',
         });
