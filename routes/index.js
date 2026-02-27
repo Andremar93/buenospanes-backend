@@ -7,6 +7,8 @@ import invoiceRoutes from './invoices.js';
 import incomeRoutes from './incomes.js';
 import employeeRoutes from './employee.js';
 import employeeDebtRoutes from './employeeDebts.js';
+import analyticsRoutes from './analytics.js';
+
 
 const router = express.Router();
 
@@ -55,5 +57,6 @@ router.use('/invoices', invoiceRoutes);
 router.use('/incomes', incomeRoutes);
 router.use('/employees', employeeRoutes);
 router.use('/employee-debts', employeeDebtRoutes);
+router.use('/analytics', analyticsRoutes);
 
 export default router;
